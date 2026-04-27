@@ -1,6 +1,6 @@
 # Project MAD
 
-Week 1 release for the `ProjectMAD` Flutter project.
+Flutter coursework project with weekly releases.
 
 ## Week 1 scope completed
 
@@ -10,9 +10,17 @@ Week 1 release for the `ProjectMAD` Flutter project.
 - Added navigation from the first screen to the second screen and back.
 - Added a widget test in `test/widget_test.dart` that verifies the basic screen flow.
 
+## Week 2 scope completed
+
+- Added a simple `BottomNavigationBar` with three sections.
+- Added basic three-screen navigation from splash to second to third screen.
+- Added Dart examples for recursive functions, enhanced enums, inheritance, and `async/await`.
+- Organized widgets into different files inside `lib/screens/`.
+- Moved the Dart example logic into `lib/data/dart_examples.dart`.
+
 ## Current app behavior
 
-The app starts on a first screen with text and a button. Pressing the button opens a second screen, and the second screen includes a button to return to the first screen.
+The app starts on a home screen inside a bottom navigation layout. The home screen includes a button that opens the second screen, the second screen shows simple Dart examples and a button to open the third screen, and the third screen returns to the home route. The bottom navigation also includes a Dart examples section and a files section showing the separated widget structure.
 
 ## Run the project
 
