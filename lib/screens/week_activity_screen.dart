@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/csv_storage.dart';
+import '../db/database_helper.dart';
 
 class WeekActivityScreen extends StatefulWidget {
   const WeekActivityScreen({super.key});
@@ -27,6 +28,7 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
 
   final List<String> _logs = <String>[];
   final List<String> _csvRows = <String>[];
+  List<Map<String, dynamic>> _dbRows = <Map<String, dynamic>>[];
 
   bool _notificationsEnabled = true;
   int _refreshSeconds = 15;
@@ -41,6 +43,7 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
     _loadPreferences();
     _loadStorageLabel();
     _loadCsvRows();
+    _loadDbRows();
   }
 
   @override
@@ -126,6 +129,111 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
     _writeLog('Loaded ${_csvRows.length} GPS rows from CSV');
   }
 
+  Future<void> _loadDbRows() async {
+    final rows = await DatabaseHelper.instance.getCoordinates();
+    if (!mounted) return;
+    setState(() => _dbRows = rows);
+    _writeLog('Loaded ${_dbRows.length} rows from SQLite');
+  }
+
+  Future<void> _insertDbRow(double lat, double lng) async {
+    final ts = DateTime.now().toIso8601String();
+    await DatabaseHelper.instance.insertCoordinate(
+      timestamp: ts,
+      latitude: lat,
+      longitude: lng,
+    );
+    _writeLog('SQLite insert: $lat, $lng');
+    await _loadDbRows();
+  }
+
+  Future<void> _showDeleteDialog(Map<String, dynamic> row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete coordinate'),
+        content: Text(
+          'Delete entry from ${row['timestamp']}?\n'
+          'Lat: ${row['latitude']}, Lng: ${row['longitude']}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await DatabaseHelper.instance.deleteCoordinate(row['id'] as int);
+      _writeLog('SQLite delete id=${row['id']}');
+      await _loadDbRows();
+    }
+  }
+
+  Future<void> _showUpdateDialog(Map<String, dynamic> row) async {
+    final latController =
+        TextEditingController(text: row['latitude'].toString());
+    final lngController =
+        TextEditingController(text: row['longitude'].toString());
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update coordinate'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: latController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true, signed: true),
+              decoration: const InputDecoration(labelText: 'Latitude'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: lngController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true, signed: true),
+              decoration: const InputDecoration(labelText: 'Longitude'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final lat = double.tryParse(latController.text);
+      final lng = double.tryParse(lngController.text);
+      if (lat == null || lng == null) {
+        _showSnackBar('Invalid coordinates');
+        return;
+      }
+      await DatabaseHelper.instance.updateCoordinate(
+        id: row['id'] as int,
+        latitude: lat,
+        longitude: lng,
+      );
+      _writeLog('SQLite update id=${row['id']} → $lat, $lng');
+      await _loadDbRows();
+    }
+  }
+
+
   Future<void> _captureLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -151,6 +259,7 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
         '${DateTime.now().toIso8601String()},${position.latitude},${position.longitude}';
 
     await _csvStorage.appendRow(row);
+    await _insertDbRow(position.latitude, position.longitude);
 
     if (!mounted) {
       return;
@@ -161,7 +270,7 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
     });
 
     await _loadCsvRows();
-    _showSnackBar('GPS coordinates saved to CSV');
+    _showSnackBar('GPS saved to CSV and SQLite');
     _writeLog('GPS saved: ${position.latitude}, ${position.longitude}');
   }
 
@@ -202,6 +311,32 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
           SimpleDialogOption(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Dialog option example'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showModalBottomSheetExample() async {
+    _writeLog('Showing modal bottom sheet');
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.share),
+            title: const Text('Share'),
+            onTap: () => Navigator.of(context).pop(),
+          ),
+          ListTile(
+            leading: const Icon(Icons.link),
+            title: const Text('Get link'),
+            onTap: () => Navigator.of(context).pop(),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Edit name'),
+            onTap: () => Navigator.of(context).pop(),
           ),
         ],
       ),
@@ -291,6 +426,10 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
                     ElevatedButton(
                       onPressed: _showToast,
                       child: const Text('Toast'),
+                    ),
+                    ElevatedButton(
+                      onPressed: _showModalBottomSheetExample,
+                      child: const Text('Bottom Sheet'),
                     ),
                   ],
                 ),
@@ -421,6 +560,73 @@ class _WeekActivityScreenState extends State<WeekActivityScreen> {
             ),
           ),
         ),
+
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Persistence with SQLite',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Reload from DB',
+                      onPressed: _loadDbRows,
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Tap a row to delete it. Long-press to edit coordinates.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 260,
+                  child: _dbRows.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No rows in SQLite yet.\nCapture GPS above to insert one.',
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: _dbRows.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final row = _dbRows[index];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.storage,
+                                color: Colors.blue,
+                              ),
+                              title: Text(
+                                '${row['latitude']}, ${row['longitude']}',
+                                style:
+                                    const TextStyle(color: Colors.blue),
+                              ),
+                              subtitle: Text(
+                                '${row['timestamp']}  •  id=${row['id']}',
+                              ),
+                              onTap: () => _showDeleteDialog(row),
+                              onLongPress: () => _showUpdateDialog(row),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
