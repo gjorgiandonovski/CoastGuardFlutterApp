@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28020225963",
+    "project_id": "coastalapp-6c8f6",
+    "storage_bucket": "coastalapp-6c8f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28020225963:android:fcb3fe1f725d37b89144ee",
+        "android_client_info": {
+          "package_name": "com.example.project_mad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgOqcfPAe1MHMh6CRTfdtUx-zrWLXAKuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
