@@ -12,6 +12,15 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   static const String _allReportsFilter = 'All';
+  static const String _trashFilter = 'Trash';
+  static const String _waterFilter = 'Water';
+  static const String _highSeverityFilter = 'High Severity';
+  static const List<String> _filters = [
+    _allReportsFilter,
+    _trashFilter,
+    _waterFilter,
+    _highSeverityFilter,
+  ];
 
   String _selectedFilter = _allReportsFilter;
   String? _selectedBeachId;
@@ -71,16 +80,12 @@ class _MapScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filters = _reportFilters;
+    const filters = _MapScreenState._filters;
     final effectiveFilter = filters.contains(selectedFilter)
         ? selectedFilter
         : _MapScreenState._allReportsFilter;
     final visibleBeaches = beaches
-        .where(
-          (beach) =>
-              effectiveFilter == _MapScreenState._allReportsFilter ||
-              beach.reportTypes.contains(effectiveFilter),
-        )
+        .where((beach) => beach.matchesFilter(effectiveFilter))
         .toList();
     final selectedBeach = visibleBeaches.isEmpty
         ? null
@@ -147,18 +152,6 @@ class _MapScreenBody extends StatelessWidget {
       },
     );
   }
-
-  List<String> get _reportFilters {
-    final reportTypes =
-        beaches
-            .expand((beach) => beach.reportTypes)
-            .where((type) => type.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-
-    return [_MapScreenState._allReportsFilter, ...reportTypes];
-  }
 }
 
 class _ReportFilterChips extends StatelessWidget {
@@ -183,12 +176,7 @@ class _ReportFilterChips extends StatelessWidget {
               label: Text(filter),
               selected: selectedFilter == filter,
               showCheckmark: false,
-              avatar: Icon(
-                filter == _MapScreenState._allReportsFilter
-                    ? Icons.tune
-                    : Icons.report_problem_outlined,
-                size: 18,
-              ),
+              avatar: Icon(_filterIcon(filter), size: 18),
               selectedColor: Theme.of(context).colorScheme.primaryContainer,
               onSelected: (_) => onSelected(filter),
             ),
@@ -197,6 +185,19 @@ class _ReportFilterChips extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _filterIcon(String filter) {
+    switch (filter) {
+      case _MapScreenState._trashFilter:
+        return Icons.delete_outline;
+      case _MapScreenState._waterFilter:
+        return Icons.water_drop_outlined;
+      case _MapScreenState._highSeverityFilter:
+        return Icons.priority_high;
+      default:
+        return Icons.tune;
+    }
   }
 }
 
@@ -376,6 +377,10 @@ class _SelectedBeachDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final riskColor = _riskColor(beach.riskLevel);
+    final cleanlinessColor = beach.cleanlinessScore == null
+        ? colorScheme.onSurfaceVariant
+        : _cleanlinessColor(beach.cleanlinessScore!);
+    final latestSeverityColor = _severityColor(beach.latestIssueSeverity);
 
     return Card(
       elevation: 0,
@@ -400,19 +405,16 @@ class _SelectedBeachDetails extends StatelessWidget {
                         beach.name,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      if (beach.municipality.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          beach.municipality,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Municipality: ${beach.municipalityLabel}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-                if (beach.status.isNotEmpty)
-                  _StatusPill(label: beach.status, color: colorScheme.primary),
               ],
             ),
             const SizedBox(height: 16),
@@ -420,25 +422,29 @@ class _SelectedBeachDetails extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                if (beach.reportTypes.isNotEmpty)
-                  _MetricTile(
-                    icon: Icons.report_problem_outlined,
-                    label: 'Report',
-                    value: beach.reportTypes.join(', '),
-                    color: colorScheme.tertiary,
-                  ),
-                if (beach.riskLevel.isNotEmpty)
-                  _MetricTile(
-                    icon: Icons.warning_amber_outlined,
-                    label: 'Risk',
-                    value: beach.riskLevel,
-                    color: riskColor,
-                  ),
+                _MetricTile(
+                  icon: Icons.cleaning_services_outlined,
+                  label: 'Cleanliness score',
+                  value: beach.cleanlinessLabel,
+                  color: cleanlinessColor,
+                ),
+                _MetricTile(
+                  icon: Icons.warning_amber_outlined,
+                  label: 'Risk level',
+                  value: beach.riskLevelLabel,
+                  color: riskColor,
+                ),
                 _MetricTile(
                   icon: Icons.assignment_outlined,
-                  label: 'Active',
-                  value: beach.activeReports.toString(),
-                  color: colorScheme.primary,
+                  label: 'Report count',
+                  value: beach.reportCount.toString(),
+                  color: colorScheme.tertiary,
+                ),
+                _MetricTile(
+                  icon: Icons.priority_high,
+                  label: 'Latest issue severity',
+                  value: beach.latestIssueSeverityLabel,
+                  color: latestSeverityColor,
                 ),
               ],
             ),
@@ -500,7 +506,7 @@ class _MetricTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 132,
+      width: 150,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -514,6 +520,8 @@ class _MetricTile extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
@@ -541,17 +549,22 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 132),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -644,6 +657,11 @@ class _BeachListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final riskColor = _riskColor(beach.riskLevel);
+    final cleanlinessColor = beach.cleanlinessScore == null
+        ? colorScheme.onSurfaceVariant
+        : _cleanlinessColor(beach.cleanlinessScore!);
+    final latestSeverityColor = _severityColor(beach.latestIssueSeverity);
+    final borderRadius = BorderRadius.circular(8);
 
     return Card(
       elevation: 0,
@@ -652,41 +670,153 @@ class _BeachListTile extends StatelessWidget {
           ? colorScheme.primaryContainer.withValues(alpha: 0.54)
           : colorScheme.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: borderRadius,
         side: BorderSide(
           color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
         ),
       ),
-      child: ListTile(
+      child: InkWell(
         onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: riskColor.withValues(alpha: 0.14),
-          child: Icon(Icons.beach_access, color: riskColor),
+        borderRadius: borderRadius,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    backgroundColor: riskColor.withValues(alpha: 0.14),
+                    child: Icon(Icons.beach_access, color: riskColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          beach.name,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Municipality: ${beach.municipalityLabel}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _StatusPill(
+                    label: beach.latestIssueSeverityLabel,
+                    color: latestSeverityColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _SummaryField(
+                    icon: Icons.cleaning_services_outlined,
+                    label: 'Cleanliness',
+                    value: beach.cleanlinessLabel,
+                    color: cleanlinessColor,
+                  ),
+                  _SummaryField(
+                    icon: Icons.warning_amber_outlined,
+                    label: 'Risk',
+                    value: beach.riskLevelLabel,
+                    color: riskColor,
+                  ),
+                  _SummaryField(
+                    icon: Icons.assignment_outlined,
+                    label: 'Reports',
+                    value: beach.reportCount.toString(),
+                    color: colorScheme.tertiary,
+                  ),
+                  _SummaryField(
+                    icon: Icons.priority_high,
+                    label: 'Latest issue severity',
+                    value: beach.latestIssueSeverityLabel,
+                    color: latestSeverityColor,
+                  ),
+                  if (!beach.hasCoordinates)
+                    _SummaryField(
+                      icon: Icons.location_off_outlined,
+                      label: 'Location',
+                      value: 'No coordinates',
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
-        title: Text(beach.name),
-        subtitle: Text(
-          [
-            beach.municipality,
-            ...beach.reportTypes,
-            if (!beach.hasCoordinates) 'No coordinates',
-          ].where((value) => value.isNotEmpty).join(' • '),
+      ),
+    );
+  }
+}
+
+class _SummaryField extends StatelessWidget {
+  const _SummaryField({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 132, maxWidth: 190),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.09),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (beach.riskLevel.isNotEmpty)
-              Text(
-                beach.riskLevel,
-                style: TextStyle(color: riskColor, fontWeight: FontWeight.w700),
+            Icon(icon, size: 17, color: color),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-            if (beach.cleanlinessScore != null)
-              Text(
-                '${beach.cleanlinessScore}/100',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
+            ),
           ],
         ),
       ),
@@ -876,8 +1006,8 @@ class _Beach {
     required this.municipality,
     required this.riskLevel,
     required this.reportTypes,
-    required this.status,
-    required this.activeReports,
+    required this.reportCount,
+    required this.latestIssueSeverity,
     required this.description,
     this.cleanlinessScore,
     this.latitude,
@@ -889,18 +1019,56 @@ class _Beach {
   final String municipality;
   final String riskLevel;
   final List<String> reportTypes;
-  final String status;
   final int? cleanlinessScore;
-  final int activeReports;
+  final int reportCount;
+  final String latestIssueSeverity;
   final String description;
   final double? latitude;
   final double? longitude;
 
   bool get hasCoordinates => latitude != null && longitude != null;
+  String get municipalityLabel => municipality.isEmpty ? 'N/A' : municipality;
+  String get riskLevelLabel => riskLevel.isEmpty ? 'N/A' : riskLevel;
+  String get cleanlinessLabel =>
+      cleanlinessScore == null ? 'N/A' : '$cleanlinessScore/100';
+  String get latestIssueSeverityLabel =>
+      latestIssueSeverity.isEmpty ? 'N/A' : latestIssueSeverity;
+
+  bool matchesFilter(String filter) {
+    switch (filter) {
+      case _MapScreenState._trashFilter:
+        return _matchesIssueKeywords(const [
+          'trash',
+          'litter',
+          'waste',
+          'garbage',
+          'debris',
+        ]);
+      case _MapScreenState._waterFilter:
+        return _matchesIssueKeywords(const [
+          'water',
+          'pollution',
+          'contamination',
+          'algae',
+          'sewage',
+        ]);
+      case _MapScreenState._highSeverityFilter:
+        return _isHighSeverity(latestIssueSeverity);
+      default:
+        return true;
+    }
+  }
+
+  bool _matchesIssueKeywords(List<String> keywords) {
+    final issueText = [...reportTypes, description].join(' ').toLowerCase();
+
+    return keywords.any(issueText.contains);
+  }
 
   factory _Beach.fromDocument(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final location = data['location'];
+    final reports = _readReportMaps(data['reports']);
 
     return _Beach(
       id: doc.id,
@@ -910,15 +1078,15 @@ class _Beach {
         'title',
       ], fallback: doc.id),
       municipality: _readString(data, const ['municipality', 'city', 'area']),
-      riskLevel: _readString(data, const ['riskLevel', 'risk', 'severity']),
-      reportTypes: _readReportTypes(data),
-      status: _readString(data, const ['status', 'condition']),
+      riskLevel: _readString(data, const ['riskLevel', 'risk']),
+      reportTypes: _readReportTypes(data, reports),
       cleanlinessScore: _readInt(data, const [
         'cleanlinessScore',
         'cleanliness',
         'score',
       ])?.clamp(0, 100),
-      activeReports: _readReportCount(data),
+      reportCount: _readReportCount(data, reports),
+      latestIssueSeverity: _readLatestIssueSeverity(data, reports),
       description: _readString(data, const ['description', 'notes', 'summary']),
       latitude:
           _readDouble(data, const ['latitude', 'lat']) ??
@@ -949,7 +1117,24 @@ class _Beach {
     return fallback;
   }
 
-  static List<String> _readReportTypes(Map<String, dynamic> data) {
+  static List<Map<String, dynamic>> _readReportMaps(Object? value) {
+    final reports = <Map<String, dynamic>>[];
+
+    if (value is Iterable) {
+      for (final report in value) {
+        if (report is Map) {
+          reports.add(Map<String, dynamic>.from(report));
+        }
+      }
+    }
+
+    return reports;
+  }
+
+  static List<String> _readReportTypes(
+    Map<String, dynamic> data,
+    List<Map<String, dynamic>> reports,
+  ) {
     final reportTypes = <String>{};
 
     for (final key in const [
@@ -963,11 +1148,8 @@ class _Beach {
       _addReportType(reportTypes, data[key]);
     }
 
-    final reports = data['reports'];
-    if (reports is Iterable) {
-      for (final report in reports) {
-        _addReportType(reportTypes, report);
-      }
+    for (final report in reports) {
+      _addReportType(reportTypes, report);
     }
 
     return reportTypes.toList()..sort();
@@ -1041,24 +1223,138 @@ class _Beach {
     return null;
   }
 
-  static int _readReportCount(Map<String, dynamic> data) {
-    final reports = data['reports'];
-    if (reports is Iterable) {
-      return reports.length;
-    }
-
+  static int _readReportCount(
+    Map<String, dynamic> data,
+    List<Map<String, dynamic>> reports,
+  ) {
     return _readInt(data, const [
-          'activeReports',
           'reportCount',
           'reportsCount',
+          'activeReports',
         ]) ??
-        0;
+        reports.length;
   }
+
+  static String _readLatestIssueSeverity(
+    Map<String, dynamic> data,
+    List<Map<String, dynamic>> reports,
+  ) {
+    final directSeverity = _readString(data, const [
+      'latestIssueSeverity',
+      'latestSeverity',
+      'issueSeverity',
+      'severity',
+    ]);
+
+    if (directSeverity.isNotEmpty) {
+      return directSeverity;
+    }
+
+    final latestReport = _latestReport(reports);
+    if (latestReport == null) {
+      return '';
+    }
+
+    return _readString(latestReport, const [
+      'severity',
+      'issueSeverity',
+      'latestIssueSeverity',
+      'riskLevel',
+      'risk',
+    ]);
+  }
+
+  static Map<String, dynamic>? _latestReport(
+    List<Map<String, dynamic>> reports,
+  ) {
+    if (reports.isEmpty) {
+      return null;
+    }
+
+    Map<String, dynamic>? latestReport;
+    int? latestTimestamp;
+
+    for (final report in reports) {
+      final timestamp = _readTimestampMillis(report);
+      if (timestamp == null) {
+        continue;
+      }
+
+      if (latestTimestamp == null || timestamp > latestTimestamp) {
+        latestTimestamp = timestamp;
+        latestReport = report;
+      }
+    }
+
+    return latestReport ?? reports.last;
+  }
+
+  static int? _readTimestampMillis(Map<String, dynamic> data) {
+    for (final key in const [
+      'createdAtEpochMs',
+      'createdAtMs',
+      'createdAt',
+      'reportedAt',
+      'timestamp',
+      'updatedAt',
+    ]) {
+      final value = data[key];
+      if (value is Timestamp) {
+        return value.millisecondsSinceEpoch;
+      }
+      if (value is DateTime) {
+        return value.millisecondsSinceEpoch;
+      }
+      if (value is num) {
+        return value.round();
+      }
+      if (value is String) {
+        final parsedMillis = int.tryParse(value.trim());
+        if (parsedMillis != null) {
+          return parsedMillis;
+        }
+
+        final parsedDate = DateTime.tryParse(value.trim());
+        if (parsedDate != null) {
+          return parsedDate.millisecondsSinceEpoch;
+        }
+      }
+    }
+
+    return null;
+  }
+}
+
+bool _isHighSeverity(String severity) {
+  final normalizedSeverity = severity.toLowerCase();
+  return normalizedSeverity.contains('high') ||
+      normalizedSeverity.contains('critical') ||
+      normalizedSeverity.contains('severe') ||
+      normalizedSeverity.contains('urgent');
+}
+
+Color _severityColor(String severity) {
+  final normalizedSeverity = severity.toLowerCase();
+  if (_isHighSeverity(normalizedSeverity)) {
+    return const Color(0xFFD9534F);
+  }
+  if (normalizedSeverity.contains('medium') ||
+      normalizedSeverity.contains('moderate') ||
+      normalizedSeverity.contains('advisory')) {
+    return const Color(0xFFE29F36);
+  }
+  if (normalizedSeverity.contains('low') ||
+      normalizedSeverity.contains('minor') ||
+      normalizedSeverity.contains('safe')) {
+    return const Color(0xFF2E8B57);
+  }
+
+  return const Color(0xFF4F6C8A);
 }
 
 Color _riskColor(String riskLevel) {
   final risk = riskLevel.toLowerCase();
-  if (risk.contains('high') || risk.contains('critical')) {
+  if (_isHighSeverity(risk)) {
     return const Color(0xFFD9534F);
   }
   if (risk.contains('medium') ||
