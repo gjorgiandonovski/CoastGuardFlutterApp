@@ -32,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _screens = [
+    final List<Widget> screens = [
       const MapScreen(),
       const ReportsScreen(),
       const EventsScreen(),
@@ -45,10 +45,7 @@ class _MainScreenState extends State<MainScreen> {
         title: Text(_titles[_selectedIndex]),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
