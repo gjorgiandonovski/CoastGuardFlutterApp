@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'screens/examples_screen.dart';
 import 'screens/map_screen.dart';
-import 'screens/splash_screen.dart';
-import 'screens/third_screen.dart';
-import 'screens/week_activity_screen.dart';
+import 'screens/reports_screen.dart';
+import 'screens/events_screen.dart';
+import 'screens/alerts_screen.dart';
+import 'screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,11 +17,11 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<String> _titles = const [
-    'Home',
-    'Dart Snippets',
-    'Files',
-    'Week 3 Activity',
     'Map',
+    'Reports',
+    'Events',
+    'Alerts',
+    'Profile',
   ];
 
   void _onItemTapped(int index) {
@@ -32,27 +32,55 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = <Widget>[
-      SplashScreen(onOpenWeekActivity: () => _onItemTapped(3)),
-      const ExamplesScreen(),
-      const ThirdScreen(),
-      const WeekActivityScreen(),
+    final List<Widget> _screens = [
       const MapScreen(),
+      const ReportsScreen(),
+      const EventsScreen(),
+      const AlertsScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_selectedIndex])),
-      body: screens[_selectedIndex],
+      appBar: AppBar(
+        title: Text(_titles[_selectedIndex]),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.code), label: 'Examples'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Files'),
-          BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Week 3'),
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map_outlined),
+            activeIcon: Icon(Icons.map),
+            label: 'Map',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_outlined),
+            activeIcon: Icon(Icons.assignment),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_outlined),
+            activeIcon: Icon(Icons.event),
+            label: 'Events',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            activeIcon: Icon(Icons.notifications),
+            label: 'Alerts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
