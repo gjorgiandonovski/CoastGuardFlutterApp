@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -132,6 +133,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return;
     }
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnackBar('You must be signed in to submit a report.');
+      return;
+    }
+
     if (!selectedBeach.hasCoordinates) {
       _showSnackBar('The selected beach does not have GPS coordinates.');
       return;
@@ -146,32 +153,60 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final now = DateTime.now();
 
     try {
-      await FirebaseFirestore.instance.collection('reports').add({
+      final firestore = FirebaseFirestore.instance;
+      final reportRef = firestore.collection('reports').doc();
+      final userRef = firestore.collection('users').doc(user.uid);
+      final notificationRef = firestore.collection('notifications').doc();
+      final description = _descriptionController.text.trim();
+
+      final batch = firestore.batch();
+      batch.set(reportRef, {
         'beachId': selectedBeach.id,
         'beach': selectedBeach.name,
         'category': _selectedCategory,
         'severity': _selectedSeverity,
-        'description': _descriptionController.text.trim(),
+        'description': description,
         'hasPhoto': _hasPhoto,
         'latitude': selectedBeach.latitude,
         'longitude': selectedBeach.longitude,
-        'status': 'Submitted',
+        'status': 'UNDER_REVIEW',
+        'userId': user.uid,
+        'userEmail': user.email,
         'createdAt': Timestamp.fromDate(now),
         'createdAtEpochMs': now.millisecondsSinceEpoch,
       });
+      batch.set(userRef, {
+        'email': user.email,
+        'points': FieldValue.increment(100),
+        'updatedAt': Timestamp.fromDate(now),
+      }, SetOptions(merge: true));
+      batch.set(notificationRef, {
+        'userId': user.uid,
+        'title': 'Report submitted',
+        'message':
+            'Your report for ${selectedBeach.name} is under review. You earned 100 points.',
+        'type': 'report',
+        'isRead': false,
+        'reportId': reportRef.id,
+        'createdAt': Timestamp.fromDate(now),
+        'createdAtEpochMs': now.millisecondsSinceEpoch,
+      });
+
+      await batch.commit();
 
       if (!mounted) {
         return;
       }
 
       setState(() {
+        _selectedBeachId = null;
         _selectedCategory = null;
         _selectedSeverity = 'Medium';
         _hasPhoto = false;
         _isSubmitting = false;
       });
       _descriptionController.clear();
-      _showSnackBar('Report submitted.');
+      _showSnackBar('Report submitted and sent for review.');
     } catch (error) {
       if (!mounted) {
         return;
@@ -350,7 +385,9 @@ class _ReportFormCard extends StatelessWidget {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Photo available'),
-                  subtitle: const Text('Flag whether a photo can be attached.'),
+                  subtitle: const Text(
+                    'Local placeholder only. No camera or upload is connected.',
+                  ),
                   value: hasPhoto,
                   onChanged: isSubmitting ? null : onPhotoChanged,
                 ),
