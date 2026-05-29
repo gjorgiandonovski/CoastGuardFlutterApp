@@ -1,26 +1,80 @@
 {
   "project_info": {
-    "project_number": "28020225963",
-    "project_id": "coastalapp-6c8f6",
-    "storage_bucket": "coastalapp-6c8f6.firebasestorage.app"
+    "project_number": "971951750524",
+    "firebase_url": "https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "coastguardapp",
+    "storage_bucket": "coastguardapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:28020225963:android:fcb3fe1f725d37b89144ee",
+        "mobilesdk_app_id": "1:971951750524:android:49228fba23339f15f538f9",
         "android_client_info": {
-          "package_name": "com.example.project_mad"
+          "package_name": "com.example.myapplication"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "971951750524-8ibfmhbog6b3numvifop986sdt2203eo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDgOqcfPAe1MHMh6CRTfdtUx-zrWLXAKuE"
+          "current_key": "AIzaSyBKV4D3ETrdzNZ_kqI1MAtTXgvwCligj5E"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "971951750524-8ibfmhbog6b3numvifop986sdt2203eo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "971951750524-6s5jopeurnc31s65dq11fvvgbudrigou.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.projectMad"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:971951750524:android:7df219d5d41ebe36f538f9",
+        "android_client_info": {
+          "package_name": "com.example.project_mad"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "971951750524-8ibfmhbog6b3numvifop986sdt2203eo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKV4D3ETrdzNZ_kqI1MAtTXgvwCligj5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "971951750524-8ibfmhbog6b3numvifop986sdt2203eo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "971951750524-6s5jopeurnc31s65dq11fvvgbudrigou.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.projectMad"
+              }
+            }
+          ]
         }
       }
     }

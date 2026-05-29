@@ -4,11 +4,12 @@ import 'main_screen.dart';
 import 'screens/login_screen.dart';
 
 class ProjectMadApp extends StatelessWidget {
-  const ProjectMadApp({super.key});
+  const ProjectMadApp({super.key, this.homeOverride});
 
   static const _showMainScreenForDebug = bool.fromEnvironment(
     'SHOW_MAIN_SCREEN',
   );
+  final Widget? homeOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,9 @@ class ProjectMadApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: _showMainScreenForDebug ? const MainScreen() : const _AuthGate(),
+      home:
+          homeOverride ??
+          (_showMainScreenForDebug ? const MainScreen() : const _AuthGate()),
     );
   }
 }
