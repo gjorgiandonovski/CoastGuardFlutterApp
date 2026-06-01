@@ -41,48 +41,54 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDzlNa8IQ3CHBYlloX_hQ_A9i_07BSw1qk',
-    appId: '1:28020225963:web:a42cb124b82e25429144ee',
-    messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    authDomain: 'coastalapp-6c8f6.firebaseapp.com',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
-    measurementId: 'G-7N5BJ97PCM',
+    apiKey: 'AIzaSyDV-tPtMo7rcOmXMviFRk2ECpryjdyYK_I',
+    appId: '1:971951750524:web:9231a94e06edd3bff538f9',
+    messagingSenderId: '971951750524',
+    projectId: 'coastguardapp',
+    authDomain: 'coastguardapp.firebaseapp.com',
+    databaseURL: 'https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'coastguardapp.firebasestorage.app',
+    measurementId: 'G-ETTRVNSV66',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDgOqcfPAe1MHMh6CRTfdtUx-zrWLXAKuE',
-    appId: '1:28020225963:android:fcb3fe1f725d37b89144ee',
-    messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
+    apiKey: 'AIzaSyBKV4D3ETrdzNZ_kqI1MAtTXgvwCligj5E',
+    appId: '1:971951750524:android:7df219d5d41ebe36f538f9',
+    messagingSenderId: '971951750524',
+    projectId: 'coastguardapp',
+    databaseURL: 'https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'coastguardapp.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCqBqaaSCSiOlHeT6F4zL2dYpelAGVyQwk',
-    appId: '1:28020225963:ios:999f9d9fee6625b49144ee',
-    messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
+    apiKey: 'AIzaSyBpLosE1CAwA2ql6tRaw6p1PViKvHLOepo',
+    appId: '1:971951750524:ios:08ce41e7a5102d49f538f9',
+    messagingSenderId: '971951750524',
+    projectId: 'coastguardapp',
+    databaseURL: 'https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'coastguardapp.firebasestorage.app',
+    iosClientId: '971951750524-6s5jopeurnc31s65dq11fvvgbudrigou.apps.googleusercontent.com',
     iosBundleId: 'com.example.projectMad',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCqBqaaSCSiOlHeT6F4zL2dYpelAGVyQwk',
-    appId: '1:28020225963:ios:999f9d9fee6625b49144ee',
-    messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
+    apiKey: 'AIzaSyBpLosE1CAwA2ql6tRaw6p1PViKvHLOepo',
+    appId: '1:971951750524:ios:08ce41e7a5102d49f538f9',
+    messagingSenderId: '971951750524',
+    projectId: 'coastguardapp',
+    databaseURL: 'https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'coastguardapp.firebasestorage.app',
+    iosClientId: '971951750524-6s5jopeurnc31s65dq11fvvgbudrigou.apps.googleusercontent.com',
     iosBundleId: 'com.example.projectMad',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDzlNa8IQ3CHBYlloX_hQ_A9i_07BSw1qk',
-    appId: '1:28020225963:web:ef1d12887b4f02a19144ee',
+    appId: '1:971951750524:web:9231a94e06edd3bff538f9',
     messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    authDomain: 'coastalapp-6c8f6.firebaseapp.com',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
+    projectId: 'coastguardapp',
+    authDomain: 'coastguardapp.firebaseapp.com',
+    storageBucket: 'coastguardapp.firebasestorage.app',
     measurementId: 'G-8YPSR87CJ3',
   );
 

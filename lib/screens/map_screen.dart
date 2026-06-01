@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/beach.dart';
+import '../models/weather.dart';
+import '../services/beach_api_service.dart';
+import '../services/weather_api_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -11,74 +15,230 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static const _defaultCenter = LatLng(40.4168, -3.7038);
+  final MapController _mapController = MapController();
+  final BeachApiService _beachApiService = BeachApiService();
+  final WeatherApiService _weatherApiService = WeatherApiService();
+  String _selectedFilter = 'All';
+
+  final List<String> _filters = [
+    'All',
+    'High Risk',
+    'Medium Risk',
+    'Low Risk',
+  ];
+
+  Color _getRiskColor(String? risk) {
+    switch (risk?.toLowerCase()) {
+      case 'high':
+        return Colors.red;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return Colors.blue;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('beaches').snapshots(),
-      builder: (context, snapshot) {
-        List<Marker> markers = [];
-        LatLng initialCenter = _defaultCenter;
+    return Scaffold(
+      body: Column(
+        children: [
+          const SizedBox(height: 50),
+          _buildFilters(),
+          Expanded(
+            child: StreamBuilder<List<Beach>>(
+              stream: _beachApiService.watchBeaches(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-        if (snapshot.hasData) {
-          markers = snapshot.data!.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final lat = (data['latitude'] as num).toDouble();
-            final lng = (data['longitude'] as num).toDouble();
-            
-            return Marker(
-              point: LatLng(lat, lng),
-              width: 44,
-              height: 44,
-              child: GestureDetector(
-                onTap: () => _showBeachInfo(data),
-                child: const Icon(Icons.location_pin, size: 44, color: Colors.blue),
-              ),
-            );
-          }).toList();
+                final beaches = snapshot.data ?? const <Beach>[];
 
-          if (markers.isNotEmpty) {
-            initialCenter = markers.first.point;
-          }
-        }
+                final filteredBeaches = beaches.where((beach) {
+                  final riskLevel = beach.riskLevel?.toLowerCase();
+                  if (_selectedFilter == 'High Risk') return riskLevel == 'high';
+                  if (_selectedFilter == 'Medium Risk') return riskLevel == 'medium';
+                  if (_selectedFilter == 'Low Risk') return riskLevel == 'low';
+                  return true;
+                }).toList();
 
-        return FlutterMap(
-          options: MapOptions(
-            initialCenter: initialCenter,
-            initialZoom: 10,
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.project_mad',
+                final markers = _buildMarkers(filteredBeaches);
+
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.35,
+                      child: FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: markers.isNotEmpty ? markers.first.point : const LatLng(40.4168, -3.7038),
+                          initialZoom: 10,
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.project_mad',
+                          ),
+                          MarkerLayer(markers: markers),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, thickness: 1),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: filteredBeaches.length,
+                        itemBuilder: (context, index) {
+                          final beach = filteredBeaches[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: _getRiskColor(
+                                  beach.riskLevel,
+                                ).withOpacity(0.1),
+                                child: Icon(Icons.beach_access, color: _getRiskColor(beach.riskLevel)),
+                              ),
+                              title: Text(beach.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('Municipality: ${beach.municipality ?? 'N/A'}'),
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('${beach.cleanlinessScore ?? '?'}/100', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  const Text('Clean', style: TextStyle(fontSize: 10)),
+                                ],
+                              ),
+                              onTap: () {
+                                if (beach.hasCoordinates) {
+                                  _mapController.move(LatLng(beach.latitude!, beach.longitude!), 14);
+                                }
+                                _showBeachDetails(beach);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            MarkerLayer(markers: markers),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
-  void _showBeachInfo(Map<String, dynamic> data) {
-    showDialog(
+  Widget _buildFilters() {
+    return SizedBox(
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: _filters.map((filter) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(filter),
+              selected: _selectedFilter == filter,
+              onSelected: (selected) {
+                setState(() => _selectedFilter = filter);
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  List<Marker> _buildMarkers(List<Beach> beaches) {
+    return beaches.where((beach) => beach.hasCoordinates).map((beach) {
+      return Marker(
+        point: LatLng(beach.latitude!, beach.longitude!),
+        width: 45,
+        height: 45,
+        child: GestureDetector(
+          onTap: () => _showBeachDetails(beach),
+          child: Icon(Icons.location_on, size: 45, color: _getRiskColor(beach.riskLevel)),
+        ),
+      );
+    }).toList();
+  }
+
+  void _showBeachDetails(Beach beach) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(data['name'] ?? 'Beach'),
-        content: Column(
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Municipality: ${data['municipality'] ?? 'N/A'}'),
-            Text('Risk Level: ${data['riskLevel'] ?? 'N/A'}'),
-            Text('Cleanliness: ${data['cleanlinessScore'] ?? 'N/A'}'),
+            Text(beach.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Divider(height: 30),
+            _infoRow(Icons.map, 'Municipality', beach.municipality),
+            _infoRow(Icons.warning, 'Risk Level', beach.riskLevel),
+            _infoRow(Icons.star, 'Cleanliness', '${beach.cleanlinessScore ?? '?'}/100'),
+            const SizedBox(height: 16),
+            const Text('Current Weather', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (beach.hasCoordinates)
+              FutureBuilder<Weather?>(
+                future: _weatherApiService.getWeather(beach.latitude!, beach.longitude!),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return const Text('Weather data unavailable');
+                  }
+                  final weather = snapshot.data!;
+                  return Row(
+                    children: [
+                      Image.network(weather.iconUrl, width: 50, height: 50),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${weather.temperature.toStringAsFixed(1)}°C', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(weather.description, style: const TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('Wind: ${weather.windSpeed} m/s', style: const TextStyle(fontSize: 12)),
+                          Text('Humidity: ${weather.humidity}%', style: const TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              )
+            else
+              const Text('Weather unavailable (no coordinates)'),
+            const SizedBox(height: 10),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String title, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.blueGrey),
+          const SizedBox(width: 10),
+          Text('$title: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value?.toString() ?? 'N/A'),
         ],
       ),
     );

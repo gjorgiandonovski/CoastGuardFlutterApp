@@ -2,18 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>971951750524-6s5jopeurnc31s65dq11fvvgbudrigou.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.971951750524-6s5jopeurnc31s65dq11fvvgbudrigou</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCqBqaaSCSiOlHeT6F4zL2dYpelAGVyQwk</string>
+	<string>AIzaSyBpLosE1CAwA2ql6tRaw6p1PViKvHLOepo</string>
 	<key>GCM_SENDER_ID</key>
-	<string>28020225963</string>
+	<string>971951750524</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.projectMad</string>
 	<key>PROJECT_ID</key>
-	<string>coastalapp-6c8f6</string>
+	<string>coastguardapp</string>
 	<key>STORAGE_BUCKET</key>
-	<string>coastalapp-6c8f6.firebasestorage.app</string>
+	<string>coastguardapp.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +29,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:28020225963:ios:999f9d9fee6625b49144ee</string>
+	<string>1:971951750524:ios:08ce41e7a5102d49f538f9</string>
+	<key>DATABASE_URL</key>
+	<string>https://coastguardapp-default-rtdb.europe-west1.firebasedatabase.app</string>
 </dict>
 </plist>
