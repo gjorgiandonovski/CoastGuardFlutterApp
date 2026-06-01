@@ -86,9 +86,9 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyDzlNa8IQ3CHBYlloX_hQ_A9i_07BSw1qk',
     appId: '1:28020225963:web:ef1d12887b4f02a19144ee',
     messagingSenderId: '28020225963',
-    projectId: 'coastalapp-6c8f6',
-    authDomain: 'coastalapp-6c8f6.firebaseapp.com',
-    storageBucket: 'coastalapp-6c8f6.firebasestorage.app',
+    projectId: 'coastguardapp',
+    authDomain: 'coastguardapp.firebaseapp.com',
+    storageBucket: 'coastguardapp.firebasestorage.app',
     measurementId: 'G-8YPSR87CJ3',
   );
 
