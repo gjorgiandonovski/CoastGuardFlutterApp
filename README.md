@@ -16,16 +16,16 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 
 ## Screenshots And Navigation
 
-| Screen | Description |
-| --- | --- |
-| Login screen | Sign in with email and password, or create a new account. |
-| Map and beach list | Coastal monitoring map with beach pins and a filterable beach list showing cleanliness scores. |
-| Profile | User profile with report and event history. Admin users can access the dashboard from here. |
-| Report Issue | Report an environmental issue by selecting a beach, category, severity, and description. |
-| Cleanup Events | Browse and join upcoming cleanup events, or create your own. |
-| Notifications | In-app notifications feed for report status updates and event activity. |
-| Events joined | Confirmation when joining an event, with live participant count. |
-| Beach Details | Beach detail page with cleanliness score, risk level, recent verified reports, and community updates. |
+| Screen | Screenshot | Description |
+| --- | --- | --- |
+| Login screen | ![Login screen](docs/screenshots/login-screen.png) | Sign in with email and password, or create a new account. |
+| Map and beach list | ![Map and beach list](docs/screenshots/map-and-beach-list.png) | Coastal monitoring map with beach pins and a filterable beach list showing cleanliness scores. |
+| Beach Details | ![Beach details](docs/screenshots/beach-details.png) | Beach detail page with cleanliness score, risk level, current weather, and community updates. |
+| Reports | ![Reports screen](docs/screenshots/reports-screen.png) | Browse submitted environmental reports with severity indicators and quick access to create a new report. |
+| Report Issue | ![Report issue](docs/screenshots/report-issue.png) | Report an environmental issue by selecting a beach, category, severity, and description. |
+| Cleanup Events | ![Cleanup events](docs/screenshots/cleanup-events.png) | Browse and join upcoming cleanup events, or create your own. |
+| Notifications | ![Notifications](docs/screenshots/notifications.png) | In-app notifications feed for report status updates and event activity. |
+| Profile | ![Profile](docs/screenshots/profile.png) | User profile with report and event history. Admin users can access the dashboard from here. |
 
 ## Demo Video
 
