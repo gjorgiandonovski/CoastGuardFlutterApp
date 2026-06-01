@@ -146,7 +146,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: _selectedBeachId,
+                    initialValue: _selectedBeachId,
                     decoration: const InputDecoration(
                       labelText: 'Beach',
                       border: OutlineInputBorder(),
@@ -166,7 +166,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       labelText: 'Category',
                       border: OutlineInputBorder(),
