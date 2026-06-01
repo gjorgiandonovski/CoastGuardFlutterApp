@@ -6,7 +6,7 @@
 
 - Repository: <https://github.com/gjorgiandonovski/CoastGuardApp>
 - Releases: <https://github.com/gjorgiandonovski/CoastGuardApp/releases>
-- Workspace: <https://upm365.sharepoint.com/sites/MAD-GjorgiAvril/SitePages>
+- Workspace: <https://upm365.sharepoint.com/sites/MAD-GjorgiAvril/SitePages/Tracking-Flutter-Pr.aspx>
 
 ## Description
 
@@ -29,7 +29,7 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 
 ## Demo Video
 
-<https://youtube.com/shorts/H56RRMt2fhw?feature=share>
+...
 
 ## Features
 
