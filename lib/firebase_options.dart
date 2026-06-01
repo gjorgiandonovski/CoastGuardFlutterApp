@@ -84,7 +84,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDzlNa8IQ3CHBYlloX_hQ_A9i_07BSw1qk',
-    appId: '1:28020225963:web:ef1d12887b4f02a19144ee',
+    appId: '1:971951750524:web:9231a94e06edd3bff538f9',
     messagingSenderId: '28020225963',
     projectId: 'coastguardapp',
     authDomain: 'coastguardapp.firebaseapp.com',
