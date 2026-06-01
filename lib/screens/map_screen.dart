@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../models/beach.dart';
+import '../services/beach_api_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -12,6 +14,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
+  final BeachApiService _beachApiService = BeachApiService();
   String _selectedFilter = 'All';
 
   final List<String> _filters = [
@@ -42,21 +45,21 @@ class _MapScreenState extends State<MapScreen> {
           const SizedBox(height: 50),
           _buildFilters(),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('beaches').snapshots(),
+            child: StreamBuilder<List<Beach>>(
+              stream: _beachApiService.watchBeaches(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final beaches = snapshot.data?.docs ?? [];
-                
-                final filteredBeaches = beaches.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  if (_selectedFilter == 'High Risk') return data['riskLevel']?.toString().toLowerCase() == 'high';
-                  if (_selectedFilter == 'Medium Risk') return data['riskLevel']?.toString().toLowerCase() == 'medium';
-                  if (_selectedFilter == 'Low Risk') return data['riskLevel']?.toString().toLowerCase() == 'low';
+                final beaches = snapshot.data ?? const <Beach>[];
+
+                final filteredBeaches = beaches.where((beach) {
+                  final riskLevel = beach.riskLevel?.toLowerCase();
+                  if (_selectedFilter == 'High Risk') return riskLevel == 'high';
+                  if (_selectedFilter == 'Medium Risk') return riskLevel == 'medium';
+                  if (_selectedFilter == 'Low Risk') return riskLevel == 'low';
                   return true;
                 }).toList();
 
@@ -87,28 +90,30 @@ class _MapScreenState extends State<MapScreen> {
                         padding: EdgeInsets.zero,
                         itemCount: filteredBeaches.length,
                         itemBuilder: (context, index) {
-                          final data = filteredBeaches[index].data() as Map<String, dynamic>;
+                          final beach = filteredBeaches[index];
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: _getRiskColor(data['riskLevel']).withOpacity(0.1),
-                                child: Icon(Icons.beach_access, color: _getRiskColor(data['riskLevel'])),
+                                backgroundColor: _getRiskColor(
+                                  beach.riskLevel,
+                                ).withValues(alpha: 0.1),
+                                child: Icon(Icons.beach_access, color: _getRiskColor(beach.riskLevel)),
                               ),
-                              title: Text(data['name'] ?? 'Unnamed Beach', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('Municipality: ${data['municipality'] ?? 'N/A'}'),
+                              title: Text(beach.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('Municipality: ${beach.municipality ?? 'N/A'}'),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text('${data['cleanlinessScore'] ?? '?'}/100', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('${beach.cleanlinessScore ?? '?'}/100', style: const TextStyle(fontWeight: FontWeight.bold)),
                                   const Text('Clean', style: TextStyle(fontSize: 10)),
                                 ],
                               ),
                               onTap: () {
-                                if (data['latitude'] != null && data['longitude'] != null) {
-                                  _mapController.move(LatLng((data['latitude'] as num).toDouble(), (data['longitude'] as num).toDouble()), 14);
+                                if (beach.hasCoordinates) {
+                                  _mapController.move(LatLng(beach.latitude!, beach.longitude!), 14);
                                 }
-                                _showBeachDetails(data);
+                                _showBeachDetails(beach);
                               },
                             ),
                           );
@@ -147,25 +152,21 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  List<Marker> _buildMarkers(List<QueryDocumentSnapshot> docs) {
-    return docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return data['latitude'] != null && data['longitude'] != null;
-    }).map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
+  List<Marker> _buildMarkers(List<Beach> beaches) {
+    return beaches.where((beach) => beach.hasCoordinates).map((beach) {
       return Marker(
-        point: LatLng((data['latitude'] as num).toDouble(), (data['longitude'] as num).toDouble()),
+        point: LatLng(beach.latitude!, beach.longitude!),
         width: 45,
         height: 45,
         child: GestureDetector(
-          onTap: () => _showBeachDetails(data),
-          child: Icon(Icons.location_on, size: 45, color: _getRiskColor(data['riskLevel'])),
+          onTap: () => _showBeachDetails(beach),
+          child: Icon(Icons.location_on, size: 45, color: _getRiskColor(beach.riskLevel)),
         ),
       );
     }).toList();
   }
 
-  void _showBeachDetails(Map<String, dynamic> data) {
+  void _showBeachDetails(Beach beach) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -175,11 +176,11 @@ class _MapScreenState extends State<MapScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(data['name'] ?? 'Beach Details', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(beach.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const Divider(height: 30),
-            _infoRow(Icons.map, 'Municipality', data['municipality']),
-            _infoRow(Icons.warning, 'Risk Level', data['riskLevel']),
-            _infoRow(Icons.star, 'Cleanliness', '${data['cleanlinessScore']}/100'),
+            _infoRow(Icons.map, 'Municipality', beach.municipality),
+            _infoRow(Icons.warning, 'Risk Level', beach.riskLevel),
+            _infoRow(Icons.star, 'Cleanliness', '${beach.cleanlinessScore ?? '?'}/100'),
             const SizedBox(height: 10),
           ],
         ),
