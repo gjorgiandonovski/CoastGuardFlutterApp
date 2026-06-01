@@ -3,7 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/beach.dart';
+import '../models/weather.dart';
 import '../services/beach_api_service.dart';
+import '../services/weather_api_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -15,6 +17,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   final BeachApiService _beachApiService = BeachApiService();
+  final WeatherApiService _weatherApiService = WeatherApiService();
   String _selectedFilter = 'All';
 
   final List<String> _filters = [
@@ -97,7 +100,7 @@ class _MapScreenState extends State<MapScreen> {
                               leading: CircleAvatar(
                                 backgroundColor: _getRiskColor(
                                   beach.riskLevel,
-                                ).withValues(alpha: 0.1),
+                                ).withOpacity(0.1),
                                 child: Icon(Icons.beach_access, color: _getRiskColor(beach.riskLevel)),
                               ),
                               title: Text(beach.name, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -181,6 +184,45 @@ class _MapScreenState extends State<MapScreen> {
             _infoRow(Icons.map, 'Municipality', beach.municipality),
             _infoRow(Icons.warning, 'Risk Level', beach.riskLevel),
             _infoRow(Icons.star, 'Cleanliness', '${beach.cleanlinessScore ?? '?'}/100'),
+            const SizedBox(height: 16),
+            const Text('Current Weather', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (beach.hasCoordinates)
+              FutureBuilder<Weather?>(
+                future: _weatherApiService.getWeather(beach.latitude!, beach.longitude!),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError || !snapshot.hasData) {
+                    return const Text('Weather data unavailable');
+                  }
+                  final weather = snapshot.data!;
+                  return Row(
+                    children: [
+                      Image.network(weather.iconUrl, width: 50, height: 50),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${weather.temperature.toStringAsFixed(1)}°C', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(weather.description, style: const TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('Wind: ${weather.windSpeed} m/s', style: const TextStyle(fontSize: 12)),
+                          Text('Humidity: ${weather.humidity}%', style: const TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              )
+            else
+              const Text('Weather unavailable (no coordinates)'),
             const SizedBox(height: 10),
           ],
         ),
