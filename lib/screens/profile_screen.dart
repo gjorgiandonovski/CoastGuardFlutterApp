@@ -168,24 +168,13 @@ class _ProfileContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _showAdminMessage(context, profile.role),
-                  icon: const Icon(Icons.admin_panel_settings_outlined),
-                  label: const Text('Admin Dashboard'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => FirebaseAuth.instance.signOut(),
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => FirebaseAuth.instance.signOut(),
+              icon: const Icon(Icons.logout),
+              label: const Text('Logout'),
+            ),
           ),
           const SizedBox(height: 22),
           Text(
@@ -237,17 +226,6 @@ class _ProfileContent extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _showAdminMessage(BuildContext context, String role) {
-    final isAdmin = role.toLowerCase() == 'admin';
-    final message = isAdmin
-        ? 'Admin dashboard is not implemented yet.'
-        : 'Admin access required.';
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
