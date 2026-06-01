@@ -159,6 +159,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final notificationRef = firestore.collection('notifications').doc();
       final description = _descriptionController.text.trim();
 
+
       final batch = firestore.batch();
       batch.set(reportRef, {
         'beachId': selectedBeach.id,
@@ -175,11 +176,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
         'createdAt': Timestamp.fromDate(now),
         'createdAtEpochMs': now.millisecondsSinceEpoch,
       });
+
+      final beachRef = firestore.collection('beaches').doc(selectedBeach.id);
+      batch.set(beachRef, {
+        'reportTypes': FieldValue.arrayUnion([_selectedCategory]),
+        'reportCount': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+
+      batch.set(beachRef, {
+        'reportTypes': FieldValue.arrayUnion([_selectedCategory]),
+        'reportCount': FieldValue.increment(1),
+        'latestIssueSeverity': _selectedSeverity,
+      }, SetOptions(merge: true));
+
       batch.set(userRef, {
         'email': user.email,
         'points': FieldValue.increment(100),
         'updatedAt': Timestamp.fromDate(now),
       }, SetOptions(merge: true));
+
       batch.set(notificationRef, {
         'userId': user.uid,
         'title': 'Report submitted',
