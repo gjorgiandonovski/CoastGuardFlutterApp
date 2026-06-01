@@ -34,6 +34,24 @@ class ReportApiService {
     final notificationRef = _firestore.collection('notifications').doc();
     final beachRef = _firestore.collection('beaches').doc(beach.id);
 
+    int scoreDecrement = 0;
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        scoreDecrement = 40;
+        break;
+      case 'high':
+        scoreDecrement = 20;
+        break;
+      case 'medium':
+        scoreDecrement = 10;
+        break;
+      case 'low':
+        scoreDecrement = 5;
+        break;
+      default:
+        scoreDecrement = 0;
+    }
+
     final batch = _firestore.batch();
     batch.set(reportRef, {
       'beachId': beach.id,
@@ -55,6 +73,8 @@ class ReportApiService {
       'reportTypes': FieldValue.arrayUnion([category]),
       'reportCount': FieldValue.increment(1),
       'latestIssueSeverity': severity,
+      'riskLevel': severity,
+      'cleanlinessScore': FieldValue.increment(-scoreDecrement),
     }, SetOptions(merge: true));
 
     batch.set(userRef, {
