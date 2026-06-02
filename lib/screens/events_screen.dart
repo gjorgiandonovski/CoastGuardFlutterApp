@@ -33,6 +33,23 @@ class _EventsScreenState extends State<EventsScreen> {
     }
   }
 
+  Future<void> _toggleJoin(Event event) async {
+    if (_currentUserId == null) return;
+
+    final isJoined = event.participantIds.contains(_currentUserId);
+    if (isJoined) {
+      await _eventApiService.unjoinEvent(event.id, _currentUserId!);
+    } else {
+      if (event.participantIds.length < event.maxParticipants) {
+        await _eventApiService.joinEvent(event.id, _currentUserId!);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event is full')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,6 +71,8 @@ class _EventsScreenState extends State<EventsScreen> {
             itemBuilder: (context, index) {
               final event = events[index];
               final isOrganizer = event.createdBy == _currentUserId;
+              final isJoined = _currentUserId != null && event.participantIds.contains(_currentUserId);
+              final isFull = event.participantIds.length >= event.maxParticipants;
 
               return Card(
                 elevation: 2,
@@ -65,24 +84,36 @@ class _EventsScreenState extends State<EventsScreen> {
                   ),
                   title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('Participants: ${event.participantIds.length}/${event.maxParticipants}'),
-                  trailing: isOrganizer 
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CreateEventScreen(event: event)),
-                            ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isOrganizer) ...[
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CreateEventScreen(event: event)),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteEvent(event.id),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteEvent(event.id),
+                        ),
+                      ] else ...[
+                        TextButton.icon(
+                          onPressed: () => _toggleJoin(event),
+                          icon: Icon(
+                            isJoined ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                            color: isJoined ? Colors.red : Colors.green,
                           ),
-                        ],
-                      )
-                    : const Icon(Icons.group_add, color: Colors.green),
+                          label: Text(
+                            isJoined ? 'Unjoin' : 'Join',
+                            style: TextStyle(color: isJoined ? Colors.red : Colors.green),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               );
             },

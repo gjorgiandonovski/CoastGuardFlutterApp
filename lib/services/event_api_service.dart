@@ -89,4 +89,42 @@ class EventApiService {
   Future<void> deleteEvent(String eventId) async {
     await _firestore.collection('events').doc(eventId).delete();
   }
+
+  Future<void> joinEvent(String eventId, String userId) async {
+    final eventRef = _firestore.collection('events').doc(eventId);
+    
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(eventRef);
+      if (!snapshot.exists) return;
+
+      final participantIds = List<String>.from(snapshot.data()?['participantIds'] ?? []);
+      final maxParticipants = snapshot.data()?['maxParticipants'] ?? 0;
+
+      if (!participantIds.contains(userId) && participantIds.length < maxParticipants) {
+        transaction.update(eventRef, {
+          'participantIds': FieldValue.arrayUnion([userId]),
+          'participantCount': FieldValue.increment(1),
+        });
+      }
+    });
+  }
+
+  Future<void> unjoinEvent(String eventId, String userId) async {
+    final eventRef = _firestore.collection('events').doc(eventId);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(eventRef);
+      if (!snapshot.exists) return;
+
+      final participantIds = List<String>.from(snapshot.data()?['participantIds'] ?? []);
+      final createdBy = snapshot.data()?['createdBy'];
+
+      if (participantIds.contains(userId) && createdBy != userId) {
+        transaction.update(eventRef, {
+          'participantIds': FieldValue.arrayRemove([userId]),
+          'participantCount': FieldValue.increment(-1),
+        });
+      }
+    });
+  }
 }
