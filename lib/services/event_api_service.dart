@@ -67,4 +67,26 @@ class EventApiService {
 
     await batch.commit();
   }
+
+  Future<void> updateEvent({
+    required String eventId,
+    required String title,
+    required String beachId,
+    required String beachName,
+    required DateTime date,
+    required int maxParticipants,
+  }) async {
+    await _firestore.collection('events').doc(eventId).update({
+      'title': title,
+      'beachId': beachId,
+      'beach': beachName,
+      'dateEpochMs': date.millisecondsSinceEpoch,
+      'maxParticipants': maxParticipants,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteEvent(String eventId) async {
+    await _firestore.collection('events').doc(eventId).delete();
+  }
 }
