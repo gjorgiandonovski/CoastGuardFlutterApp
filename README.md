@@ -4,8 +4,8 @@
 
 ### GitHub
 
-- Repository: <https://github.com/gjorgiandonovski/CoastGuardApp>
-- Releases: <https://github.com/gjorgiandonovski/CoastGuardApp/releases>
+- Repository: <https://github.com/gjorgiandonovski/CoastGuardFlutterApp>
+- Releases: <https://github.com/gjorgiandonovski/CoastGuardFlutterApp/tags>
 - Workspace: <https://upm365.sharepoint.com/sites/MAD-GjorgiAvril/SitePages/Tracking-Flutter-Pr.aspx>
 
 ## Description
