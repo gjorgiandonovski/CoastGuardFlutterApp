@@ -23,7 +23,7 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 | Beach Details | ![Beach details](docs/screenshots/beach-details.png) | Beach detail page with cleanliness score, risk level, current weather, and community updates. |
 | Reports | ![Reports screen](docs/screenshots/reports-screen.png) | Browse submitted environmental reports with severity indicators and quick access to create a new report. |
 | Report Issue | ![Report issue](docs/screenshots/report-issue.png) | Report an environmental issue by selecting a beach, category, severity, and description. |
-| Cleanup Events | ![Cleanup events](docs/screenshots/cleanup-events.png) | Browse and join upcoming cleanup events, or create your own. |
+| Cleanup Events | ![Cleanup events](docs/screenshots/create_events.png) | Browse and join upcoming cleanup events, or create your own. |
 | Notifications | ![Notifications](docs/screenshots/notifications.png) | In-app notifications feed for report status updates and event activity. |
 | Profile | ![Profile](docs/screenshots/profile-photo.png) | User profile with report and event history. Admin users can access the dashboard from here. |
 
