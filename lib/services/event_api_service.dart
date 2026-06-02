@@ -23,21 +23,23 @@ class EventApiService {
   Future<void> createCleanupEvent({
     required User user,
     required Beach beach,
+    required String title,
+    required DateTime date,
+    required int maxParticipants,
   }) async {
     final now = DateTime.now();
-    final eventDate = now.add(const Duration(days: 2));
     final eventRef = _firestore.collection('events').doc();
     final userRef = _firestore.collection('users').doc(user.uid);
     final notificationRef = _firestore.collection('notifications').doc();
 
     final batch = _firestore.batch();
     batch.set(eventRef, {
-      'title': 'Beach Cleanup at ${beach.name}',
+      'title': title,
       'type': 'cleanup',
       'beachId': beach.id,
       'beach': beach.name,
-      'dateEpochMs': eventDate.millisecondsSinceEpoch,
-      'maxParticipants': 50,
+      'dateEpochMs': date.millisecondsSinceEpoch,
+      'maxParticipants': maxParticipants,
       'participantCount': 1,
       'participantIds': [user.uid],
       'status': 'SCHEDULED',
@@ -46,16 +48,16 @@ class EventApiService {
       'createdAt': Timestamp.fromDate(now),
       'createdAtEpochMs': now.millisecondsSinceEpoch,
     });
+
     batch.set(userRef, {
-      'email': user.email,
       'points': FieldValue.increment(150),
       'updatedAt': Timestamp.fromDate(now),
     }, SetOptions(merge: true));
+
     batch.set(notificationRef, {
       'userId': user.uid,
       'title': 'Cleanup event published',
-      'message':
-          'Your event at ${beach.name} is live. You earned 150 points.',
+      'message': 'Your event at ${beach.name} is live. You earned 150 points.',
       'type': 'event',
       'isRead': false,
       'eventId': eventRef.id,

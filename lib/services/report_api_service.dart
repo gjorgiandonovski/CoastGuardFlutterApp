@@ -62,7 +62,7 @@ class ReportApiService {
       'hasPhoto': hasPhoto,
       'latitude': beach.latitude,
       'longitude': beach.longitude,
-      'status': 'UNDER_REVIEW',
+      'status': 'OPEN',
       'userId': user.uid,
       'userEmail': user.email,
       'createdAt': Timestamp.fromDate(now),
@@ -87,7 +87,7 @@ class ReportApiService {
       'userId': user.uid,
       'title': 'Report submitted',
       'message':
-          'Your report for ${beach.name} is under review. You earned 100 points.',
+          'Your report for ${beach.name} is now open and visible to the community.',
       'type': 'report',
       'isRead': false,
       'reportId': reportRef.id,
