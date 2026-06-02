@@ -10,7 +10,7 @@
 
 ## Description
 
-CoastGuard is an Android app for beach environmental monitoring and community-driven action. Users can report pollution issues at specific beaches, view real-time risk data on an interactive map, join or create cleanup events, browse beach cleanliness scores, and receive in-app alerts about environmental conditions. An admin dashboard allows moderators to verify or reject submitted reports, ensuring data quality.
+CoastGuard is a multiplatform app for beach environmental monitoring and community-driven action. Users can report pollution issues at specific beaches, view real-time risk data on an interactive map, join or create cleanup events, browse beach cleanliness scores, and receive in-app alerts about environmental conditions. An admin dashboard allows moderators to verify or reject submitted reports, ensuring data quality.
 
 Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris Tracker, which focus primarily on logging trash during active cleanups, CoastGuard takes a broader approach: it combines issue reporting, community coordination, and beach health monitoring in a single platform. Unlike those apps, CoastGuard includes a risk-scoring system per beach, community comments, and event management, making it useful not just during cleanups, but as an ongoing environmental awareness tool.
 
@@ -29,7 +29,7 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 
 ## Demo Video
 
-...
+https://youtu.be/FeNk2pHj1No
 
 ## Features
 
@@ -41,6 +41,7 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 - Create and join community cleanup events.
 - Receive in-app notifications and alerts about beach conditions.
 - Read and post comments on individual beach pages.
+- See each beach current weather.
 - Admin panel to verify or reject submitted reports.
 
 ### Technical
@@ -50,6 +51,7 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 - Flutter: Cross-platform app framework used for the project implementation in this repository.
 - Dart: Primary application language.
 - `flutter_map`: Interactive map support using OpenStreetMap tiles. Ref: `lib/screens/map_screen.dart`
+- OpenWeatherMap Api
 - Coroutines/stream-style async handling via Dart `Future` and `Stream`.
 - Seeded demo data for beaches, events, and reports focused on Spanish coastlines.
 
@@ -61,26 +63,6 @@ Compared to existing apps like Clean Swell (Ocean Conservancy) or Marine Debris 
 4. To report an issue, open a beach detail flow and submit the category, severity, and description.
 5. To join a cleanup event, go to the Events section and tap `Join`, or create your own event.
 6. Check the Notifications feed for alerts and updates on beaches you follow.
-
-## Firebase Setup
-
-1. Create a Firebase project at <https://firebase.google.com/>.
-2. Register an Android app with package name `com.example.project_mad`.
-3. Download and place `google-services.json` in `android/app/google-services.json`.
-4. Enable `Authentication -> Sign-in method -> Email/Password`.
-5. Create a Cloud Firestore database. Standard edition with locked mode is recommended.
-6. Publish the following Firestore security rules:
-
-```text
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
 
 ## Run Locally
 
